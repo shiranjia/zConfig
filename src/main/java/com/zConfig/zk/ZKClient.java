@@ -1,21 +1,28 @@
 package com.zConfig.zk;
 
+import com.google.common.base.Optional;
 import com.zConfig.monitor.Monitor;
+import com.zConfig.monitor.Node;
 import com.zConfig.store.Store;
+import com.zConfig.utils.AddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Created by jiashiran on 2016/11/4.
  */
 public abstract class ZKClient {
-    protected   final     Logger        log                                          = LoggerFactory.getLogger(this.getClass());
-    public      final       String      ZOOKEEPER_SEPARATOR                          = "/";
+    protected   final       Logger      log                                          = LoggerFactory.getLogger(this.getClass());
+    protected   final       String      ZOOKEEPER_SEPARATOR                          = "/";
     private     final       String      ROOT_PATH                                    = "/xConfig";                   //配置根目录
     protected               String      APP_PATH;                                                                    //应用目录
-    private     volatile    boolean     watched                                      = false;                        //是否监听数据变化
+    private     final       String      DATA_PATH                                    = "data";                       //数据存放目录
+    private     final       String      SERVER_PATH                                  = "cluster";                    //服务存放目录
+    //private     volatile    boolean     watched                                      = false;                        //是否监听数据变化
     protected               Store       store;                                                                       //存储数据结构
-
+    protected               Monitor     monitor;
 
     /**
      * 设置数据
@@ -23,10 +30,6 @@ public abstract class ZKClient {
      * @param value
      */
     public void set(String key,String value) throws Exception {
-        if( !watched ){
-            watched = true;
-            watcher();
-        }
         setLocal(key,value);
         setRemote(getNodePath(key), value);
     }
@@ -42,9 +45,9 @@ public abstract class ZKClient {
 
     /**
      * 删除zk中配置
-     * @param key
+     * @param path
      */
-    protected abstract void removeRemote(String key) throws Exception;
+    protected abstract void removeRemote(String path) throws Exception;
 
     /**
      * 更新本地数据
@@ -66,7 +69,7 @@ public abstract class ZKClient {
     /**
      * 添加监听
      */
-    protected abstract void watcher() throws Exception;
+    protected abstract void watcher();
 
     /**
      * 获得数据
@@ -74,7 +77,8 @@ public abstract class ZKClient {
      * @param key
      */
     public String get(String key) {
-        return this.store.get(key);
+        Optional<String> optional = Optional.fromNullable(this.store.get(key));
+        return optional.orNull();
     }
 
     /**
@@ -86,12 +90,32 @@ public abstract class ZKClient {
     }
 
     /**
+     * 获得数据存放路径
+     * @return
+     */
+    protected String getDatePath(){
+        return getAppPath() + ZOOKEEPER_SEPARATOR + DATA_PATH;
+    }
+
+    protected String getClusterPath(){
+        return getAppPath() + ZOOKEEPER_SEPARATOR + SERVER_PATH;
+    }
+
+    /**
+     * 获得服务器ip路径
+     * @return
+     */
+    protected String host(){
+        return getAppPath() + ZOOKEEPER_SEPARATOR + SERVER_PATH + ZOOKEEPER_SEPARATOR + AddressUtils.getHostIp();
+    }
+
+    /**
      * 根据zk路径得到数据key
      * @param path
      * @return
      */
     protected String getNodeKey(String path){
-        return path.replace(getAppPath(),"");
+        return path.replace(getDatePath() + ZOOKEEPER_SEPARATOR,"");
     }
 
     /**
@@ -99,8 +123,8 @@ public abstract class ZKClient {
      * @param key
      * @return
      */
-    private String getNodePath(String key){
-        return ROOT_PATH  + ZOOKEEPER_SEPARATOR + APP_PATH + ZOOKEEPER_SEPARATOR + key;
+    protected String getNodePath(String key){
+        return getDatePath() + ZOOKEEPER_SEPARATOR + key;
     }
 
     /**
@@ -108,5 +132,21 @@ public abstract class ZKClient {
      * @return
      */
     public abstract Monitor getMonitor();
+
+    /**
+     * 从zk同步配置到本地
+     */
+    public void refreshFromRemote(){
+        Monitor monitor = getMonitor();
+        List<Node> list = monitor.getConfigList();
+        for (Node n : list){
+            store.set(n.getKey() , n.getValue());
+        }
+    }
+
+    /**
+     * 注册服务ip
+     */
+    public abstract void registeServer();
 
 }

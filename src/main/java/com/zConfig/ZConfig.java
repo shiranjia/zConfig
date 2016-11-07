@@ -1,5 +1,6 @@
 package com.zConfig;
 
+import com.zConfig.monitor.Monitor;
 import com.zConfig.store.MapStore;
 import com.zConfig.store.Store;
 import com.zConfig.zk.CuratorZK;
@@ -12,19 +13,18 @@ import org.slf4j.LoggerFactory;
  * Created by jiashiran on 2016/11/4.
  */
 public class ZConfig {
-    private static final Logger logger        = LoggerFactory.getLogger(ZConfig.class);
+    private static final    Logger              logger                              = LoggerFactory.getLogger(ZConfig.class);
 
-    private static ZKClient client;
+    private static          ZKClient            client;
 
-    private static ZConfig zConfig = new ZConfig();
-
+    private static          ZConfig             zConfig                             = new ZConfig();
 
     private ZConfig(){}
 
     /**
      * 构造函数 store 默认为map zk客户端使用Curator
-     * @param url
-     * @param app
+     * @param url   zk地址
+     * @param app   应用名
      * @return
      */
     public static ZConfig newCuratorClientConfig(String url , String app){
@@ -34,14 +34,46 @@ public class ZConfig {
     }
 
     /**
+     * 构造函数 store 默认为map zk客户端使用Curator
+     * @param url   zk地址
+     * @param app   应用名
+     * @param refreshFromRemote 是否从zk同步配置到本地
+     * @return
+     */
+    public static ZConfig newCuratorClientConfig(String url , String app , boolean refreshFromRemote){
+        Store store = new MapStore();
+        client = new CuratorZK(url , app , store);
+        if(refreshFromRemote){
+            client.refreshFromRemote();
+        }
+        return zConfig;
+    }
+
+    /**
      * 自定义 store 存储 构造函数 zk客户端使用Curator
-     * @param url
-     * @param app
-     * @param store
+     * @param url   zk地址
+     * @param app   应用名
+     * @param store 自定义存储结构
      * @return
      */
     public static ZConfig newCuratorClientConfig(String url , String app,Store store){
         client = new CuratorZK(url , app , store);
+        return zConfig;
+    }
+
+    /**
+     * 自定义 store 存储 构造函数 zk客户端使用Curator
+     * @param url   zk地址
+     * @param app   应用名
+     * @param store 自定义存储结构
+     * @param refreshFromRemote  是否从zk同步配置到本地
+     * @return
+     */
+    public static ZConfig newCuratorClientConfig(String url , String app,Store store, boolean refreshFromRemote){
+        client = new CuratorZK(url , app , store);
+        if(refreshFromRemote){
+            client.refreshFromRemote();
+        }
         return zConfig;
     }
 
@@ -86,5 +118,9 @@ public class ZConfig {
             //e.printStackTrace();
             logger.error("ZConfig.remove.exception : " ,e);
         }
+    }
+
+    public Monitor getMonitor(){
+        return client.getMonitor();
     }
 }

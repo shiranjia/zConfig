@@ -1,16 +1,17 @@
 package com.zConfig.store;
 
-import com.google.common.collect.Maps;
-
-import java.util.Map;
+import java.util.LinkedList;
 
 /**
- * 基于map实现存储
- * Created by jiashiran on 2016/11/4.
+ * 基于链式存储
+ * Created by jiashiran on 2016/11/7.
  */
-public class MapStore implements Store{
+public class LinkListStore extends LinkedList<String> implements Store{
 
-    private Map<String,String> map = Maps.newHashMap();
+    public LinkListStore(){
+        super();
+    }
+
 
     /**
      * 设置 更新 数据
@@ -21,7 +22,7 @@ public class MapStore implements Store{
      */
     @Override
     public String set(String key, String value) {
-        return map.put(key, value);
+        return null;
     }
 
     /**
@@ -31,7 +32,7 @@ public class MapStore implements Store{
      */
     @Override
     public String get(String key) {
-        return map.get(key);
+        return null;
     }
 
     /**
@@ -41,7 +42,6 @@ public class MapStore implements Store{
      */
     @Override
     public void remove(String key) {
-        map.remove(key);
-    }
 
+    }
 }

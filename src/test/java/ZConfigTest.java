@@ -1,7 +1,12 @@
 import com.zConfig.ZConfig;
+import com.zConfig.monitor.Monitor;
+import com.zConfig.monitor.Node;
 import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by jiashiran on 2016/11/4.
@@ -35,9 +40,20 @@ public class ZConfigTest {
 
     public static void main(String[] args) {
         config = config.newCuratorClientConfig(zk,app);
-        config.set("123","阿克苏粉色发");
-        String v = config.get("123");
-        config.remove("123");
+        config.set("t1","阿克苏粉色发");
+        String v = config.get("t1");
+        System.out.println(v);
+        CountDownLatch latch = new CountDownLatch(1);
+        Monitor monitor = config.getMonitor();
+        List<Node> nodes = monitor.getConfigList();
+        List<String> servers = monitor.getServerList();
+        try {
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //config.remove("123");
         //Assert.assertEquals( "dddsa" , v);
     }
+
 }
