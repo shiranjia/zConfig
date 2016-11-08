@@ -84,6 +84,7 @@ public class ZConfig {
      * @param app
      * @return
      */
+    @Deprecated
     public static ZConfig newZKClientConfig(String url , String app){
         client = new ZKClientZK(url,app,new MapStore());
         return zConfig;
@@ -96,6 +97,7 @@ public class ZConfig {
      * @param refreshFromRemote 是否从zk同步配置到本地
      * @return
      */
+    @Deprecated
     public static ZConfig newZKClientConfig(String url , String app , boolean refreshFromRemote){
         client = new ZKClientZK(url,app,new MapStore());
         if(refreshFromRemote){

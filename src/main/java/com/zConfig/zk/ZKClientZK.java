@@ -16,7 +16,9 @@ import java.util.List;
 
 /**
  * Created by jiashiran on 2016/11/7.
+ * 废弃 改为 {@link com.zConfig.zk.CuratorZK}
  */
+@Deprecated
 public class ZKClientZK extends ZKClient{
 
     private int                     soTimeout     = 5000;                                    //zk链接超时时间
