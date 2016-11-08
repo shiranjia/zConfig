@@ -39,10 +39,11 @@ public class ZConfigTest {
     }
 
     public static void main(String[] args) {
-        config = config.newCuratorClientConfig(zk,app);
+        //config = config.newCuratorClientConfig(zk,app);
+        config = config.newZKClientConfig(zk,app,true);
         config.set("t1","阿克苏粉色发");
-        String v = config.get("t1");
-        System.out.println(v);
+        //String v = config.get("t1");
+        //System.out.println(v);
         CountDownLatch latch = new CountDownLatch(1);
         Monitor monitor = config.getMonitor();
         List<Node> nodes = monitor.getConfigList();

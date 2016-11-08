@@ -25,6 +25,13 @@ public abstract class ZKClient {
     protected               Monitor     monitor;
 
     /**
+     * 初始化方法，注册监听服务等
+     */
+    protected void init(){
+        watcher();
+        registeServer();
+    }
+    /**
      * 设置数据
      * @param key
      * @param value

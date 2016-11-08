@@ -40,8 +40,7 @@ public class CuratorZK extends ZKClient{
                 .build();
         this.store = store;
         client.start();
-        watcher();
-        registeServer();
+        init();
     }
 
 
@@ -81,7 +80,7 @@ public class CuratorZK extends ZKClient{
     @Override
     protected void watcher(){
         try{
-            PathChildrenCache cache = new PathChildrenCache(client,getAppPath(),true);
+            PathChildrenCache cache = new PathChildrenCache(client,getDatePath(),true);
             cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
             cache.getListenable().addListener(new PathChildrenCacheListener() {
                 @Override

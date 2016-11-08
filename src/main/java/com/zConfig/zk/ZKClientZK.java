@@ -1,14 +1,17 @@
 package com.zConfig.zk;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.zConfig.monitor.Monitor;
 import com.zConfig.monitor.Node;
 import com.zConfig.store.Store;
-import com.zConfig.utils.AddressUtils;
 import org.I0Itec.zkclient.IZkChildListener;
+import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.exception.ZkMarshallingError;
+import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 
-import java.util.ArrayList;
+import java.io.EOFException;
 import java.util.List;
 
 /**
@@ -28,6 +31,10 @@ public class ZKClientZK extends ZKClient{
         client = new ZkClient(zk,soTimeout);
         this.APP_PATH = app;
         this.store = store;
+        init();
+        Monitor monitor = getMonitor();
+        List<Node> configs = monitor.getConfigList();
+
     }
 
 
@@ -59,16 +66,44 @@ public class ZKClientZK extends ZKClient{
     }
 
     /**
+     * 监听数据节点
+     * @param path
+     */
+    private void subscribeDataChanges(String path){
+        client.subscribeDataChanges(path, new IZkDataListener() {
+            @Override
+            public void handleDataChange(String dataPath, Object data) throws Exception {
+                store.set(getNodeKey(dataPath),(String)data);
+            }
+
+            @Override
+            public void handleDataDeleted(String dataPath) throws Exception {
+                store.remove(getNodeKey(dataPath));
+            }
+        });
+    }
+
+    /**
      * 添加监听
      */
     @Override
     protected void watcher(){
-            client.subscribeChildChanges(getAppPath(), new IZkChildListener() {
+        client.subscribeChildChanges(getDatePath(), new IZkChildListener() {
                 @Override
                 public void handleChildChange(String s, List<String> list) throws Exception {
                     log.error("S:{} , list:{}",s,list);
+                    Monitor monitor = getMonitor();
+                    List<Node> configs = monitor.getConfigList();
+                    for (Node n : configs){
+                        store.set(n.getKey(),n.getValue());
+                    }
                 }
-            });
+        });
+        Monitor monitor = getMonitor();
+        List<Node> configs = monitor.getConfigList();
+        for (Node n : configs){
+            subscribeDataChanges(getNodePath(n.getKey()));
+        }
     }
 
     /**
@@ -108,11 +143,17 @@ public class ZKClientZK extends ZKClient{
          */
         @Override
         public List<Node> getConfigList() {
-            List<String> child = client.getChildren(getAppPath());
+            List<String> child = client.getChildren(getDatePath());
             List<Node> nodes = Lists.newLinkedList();
             for (String s : child) {
-                Node node = new Node(s, (String) client.readData(getAppPath() + ZOOKEEPER_SEPARATOR + s));
-                nodes.add(node);
+                try {
+                    Optional<Object> data = Optional.fromNullable(client.readData(getNodePath(s)));
+                    Node node = new Node(s, (String) data.or(""));
+                    nodes.add(node);
+                }catch (ZkMarshallingError e){
+                    Node node = new Node(s, "");
+                    nodes.add(node);
+                }
             }
             return nodes;
         }
@@ -123,6 +164,8 @@ public class ZKClientZK extends ZKClient{
      */
     @Override
     public void registeServer() {
-        client.createEphemeral(getClusterPath() + ZOOKEEPER_SEPARATOR + AddressUtils.getHostIp());
+        try {
+            client.createEphemeral(host());
+        }catch (ZkNodeExistsException e){}
     }
 }

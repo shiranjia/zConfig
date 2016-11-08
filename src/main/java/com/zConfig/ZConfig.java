@@ -5,6 +5,7 @@ import com.zConfig.store.MapStore;
 import com.zConfig.store.Store;
 import com.zConfig.zk.CuratorZK;
 import com.zConfig.zk.ZKClient;
+import com.zConfig.zk.ZKClientZK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +72,32 @@ public class ZConfig {
      */
     public static ZConfig newCuratorClientConfig(String url , String app,Store store, boolean refreshFromRemote){
         client = new CuratorZK(url , app , store);
+        if(refreshFromRemote){
+            client.refreshFromRemote();
+        }
+        return zConfig;
+    }
+
+    /**
+     * 使用ZKClient构造ZConfig
+     * @param url
+     * @param app
+     * @return
+     */
+    public static ZConfig newZKClientConfig(String url , String app){
+        client = new ZKClientZK(url,app,new MapStore());
+        return zConfig;
+    }
+
+    /**
+     * 使用ZKClient构造ZConfig
+     * @param url
+     * @param app
+     * @param refreshFromRemote 是否从zk同步配置到本地
+     * @return
+     */
+    public static ZConfig newZKClientConfig(String url , String app , boolean refreshFromRemote){
+        client = new ZKClientZK(url,app,new MapStore());
         if(refreshFromRemote){
             client.refreshFromRemote();
         }
