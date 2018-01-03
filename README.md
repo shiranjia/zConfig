@@ -1,8 +1,8 @@
-##zConfig 
+## zConfig 
 ##### a Uniform configuration tool by zk
 
 ____________________________________________________________________________________________________________________________________
-###example
+### example
 ##### String zk = "192.168.150.119,192.168.150.120,192.168.150.121:2181"; <br/>
 ##### String app = "test";  <br/>
 ##### ZConfig config = config.newCuratorClientConfig(zk,app); <br/>
